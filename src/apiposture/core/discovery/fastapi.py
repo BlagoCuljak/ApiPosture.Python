@@ -11,7 +11,6 @@ from apiposture.core.models.authorization import AuthorizationInfo
 from apiposture.core.models.endpoint import Endpoint
 from apiposture.core.models.enums import EndpointType, Framework, HttpMethod
 
-
 # FastAPI route decorator patterns
 FASTAPI_ROUTE_DECORATORS = {
     "get": HttpMethod.GET,
@@ -153,7 +152,11 @@ class FastAPIEndpointDiscoverer(EndpointDiscoverer):
             methods_arg = ASTHelpers.find_keyword_arg(decorator, "methods")
             if methods_arg:
                 method_strs = ASTHelpers.get_list_of_strings(methods_arg)
-                methods = [HttpMethod(m.upper()) for m in method_strs if m.upper() in HttpMethod.__members__]
+                methods = [
+                    HttpMethod(m.upper())
+                    for m in method_strs
+                    if m.upper() in HttpMethod.__members__
+                ]
             else:
                 methods = [HttpMethod.GET]  # Default
         else:

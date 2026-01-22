@@ -2,8 +2,6 @@
 
 from pathlib import Path
 
-import pytest
-
 from apiposture.core.models.authorization import AuthorizationInfo
 from apiposture.core.models.endpoint import Endpoint
 from apiposture.core.models.enums import (

@@ -25,7 +25,8 @@ class MarkdownFormatter(OutputFormatter):
         lines.append("## Summary")
         lines.append("")
         lines.append(f"- **Files Scanned:** {len(result.files_scanned)}")
-        lines.append(f"- **Frameworks Detected:** {', '.join(f.value for f in result.frameworks_detected) or 'None'}")
+        frameworks = ", ".join(f.value for f in result.frameworks_detected) or "None"
+        lines.append(f"- **Frameworks Detected:** {frameworks}")
         lines.append(f"- **Endpoints Discovered:** {len(result.endpoints)}")
         lines.append(f"- **Total Findings:** {len(result.active_findings)}")
         lines.append(f"- **Suppressed Findings:** {len(result.suppressed_findings)}")
@@ -38,7 +39,10 @@ class MarkdownFormatter(OutputFormatter):
         lines.append("")
         lines.append("| Severity | Count |")
         lines.append("|----------|-------|")
-        for severity in [Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM, Severity.LOW, Severity.INFO]:
+        severities = [
+            Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM, Severity.LOW, Severity.INFO
+        ]
+        for severity in severities:
             count = summary[severity]
             emoji = self._severity_emoji(severity)
             lines.append(f"| {emoji} {severity.value.capitalize()} | {count} |")
@@ -55,7 +59,9 @@ class MarkdownFormatter(OutputFormatter):
                 lines.append("")
                 lines.append(f"**Severity:** {finding.severity.value.capitalize()}")
                 lines.append("")
-                lines.append(f"**Endpoint:** `{finding.endpoint.full_route}` [{finding.endpoint.display_methods}]")
+                route = finding.endpoint.full_route
+                methods = finding.endpoint.display_methods
+                lines.append(f"**Endpoint:** `{route}` [{methods}]")
                 lines.append("")
                 lines.append(f"**Location:** `{finding.location}`")
                 lines.append("")

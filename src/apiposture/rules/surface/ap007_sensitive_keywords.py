@@ -8,7 +8,6 @@ from apiposture.core.models.enums import SecurityClassification, Severity
 from apiposture.core.models.finding import Finding
 from apiposture.rules.base import SecurityRule
 
-
 # Sensitive keywords in routes that suggest admin/debug functionality
 SENSITIVE_KEYWORDS = {
     "admin",

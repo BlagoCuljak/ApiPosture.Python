@@ -1,6 +1,6 @@
 """Enumerations for ApiPosture."""
 
-from enum import Enum, auto
+from enum import Enum
 
 
 class HttpMethod(str, Enum):
@@ -59,16 +59,16 @@ class Severity(str, Enum):
         }
         return order_map[self]
 
-    def __lt__(self, other: "Severity") -> bool:
+    def __lt__(self, other: "Severity") -> bool:  # type: ignore[override]
         return self.order < other.order
 
-    def __le__(self, other: "Severity") -> bool:
+    def __le__(self, other: "Severity") -> bool:  # type: ignore[override]
         return self.order <= other.order
 
-    def __gt__(self, other: "Severity") -> bool:
+    def __gt__(self, other: "Severity") -> bool:  # type: ignore[override]
         return self.order > other.order
 
-    def __ge__(self, other: "Severity") -> bool:
+    def __ge__(self, other: "Severity") -> bool:  # type: ignore[override]
         return self.order >= other.order
 
 

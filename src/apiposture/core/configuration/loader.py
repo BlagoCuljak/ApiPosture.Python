@@ -4,8 +4,9 @@ import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 
 @dataclass
@@ -126,7 +127,7 @@ class ConfigLoader:
         return ConfigLoader._parse_config(data)
 
     @staticmethod
-    def _parse_config(data: dict) -> ApiPostureConfig:
+    def _parse_config(data: dict[str, Any]) -> ApiPostureConfig:
         """Parse configuration dictionary into ApiPostureConfig."""
         config = ApiPostureConfig()
 

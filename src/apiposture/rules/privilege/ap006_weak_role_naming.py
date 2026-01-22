@@ -7,7 +7,6 @@ from apiposture.core.models.enums import Severity
 from apiposture.core.models.finding import Finding
 from apiposture.rules.base import SecurityRule
 
-
 # Generic role names that should be more specific
 WEAK_ROLE_NAMES = {
     "user",

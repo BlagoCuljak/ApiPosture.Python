@@ -1,6 +1,6 @@
 """License manager stub for Pro features."""
 
-from apiposture.core.licensing.context import LicenseContext, LicenseType
+from apiposture.core.licensing.context import LicenseContext
 
 
 class LicenseManager:

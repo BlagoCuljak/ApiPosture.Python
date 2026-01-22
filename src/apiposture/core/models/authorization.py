@@ -42,7 +42,9 @@ class AuthorizationInfo:
     @property
     def is_public(self) -> bool:
         """Check if the endpoint is effectively public."""
-        return self.allows_anonymous or (not self.requires_auth and not self.has_specific_requirements)
+        return self.allows_anonymous or (
+            not self.requires_auth and not self.has_specific_requirements
+        )
 
     def merge(self, other: "AuthorizationInfo", override: bool = False) -> "AuthorizationInfo":
         """

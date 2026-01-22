@@ -1,13 +1,22 @@
 """Django REST Framework authorization extraction."""
 
 import ast
+from typing import TypedDict
 
 from apiposture.core.analysis.source_loader import ASTHelpers
 from apiposture.core.models.authorization import AuthorizationInfo
 
 
+class _PermissionConfig(TypedDict, total=False):
+    """Type for DRF permission class configuration."""
+
+    allows_anonymous: bool
+    requires_auth: bool
+    roles: list[str]
+
+
 # DRF permission classes
-DRF_PERMISSION_CLASSES = {
+DRF_PERMISSION_CLASSES: dict[str, _PermissionConfig] = {
     # Built-in
     "AllowAny": {"allows_anonymous": True},
     "IsAuthenticated": {"requires_auth": True},

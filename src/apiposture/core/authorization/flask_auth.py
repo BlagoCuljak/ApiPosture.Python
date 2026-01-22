@@ -5,7 +5,6 @@ import ast
 from apiposture.core.analysis.source_loader import ASTHelpers
 from apiposture.core.models.authorization import AuthorizationInfo
 
-
 # Known Flask auth decorator patterns
 AUTH_DECORATORS = {
     # flask-login
@@ -17,10 +16,8 @@ AUTH_DECORATORS = {
     "fresh_jwt_required",
     "verify_jwt_in_request",
     # flask-httpauth
-    "login_required",
     "auth_required",
     # flask-security
-    "auth_required",
     "auth_token_required",
     "http_auth_required",
     # Common custom patterns

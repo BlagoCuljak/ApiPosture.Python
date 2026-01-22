@@ -52,7 +52,10 @@ class AP001PublicWithoutIntent(SecurityRule):
 
         yield self.create_finding(
             endpoint,
-            message=f"Endpoint '{endpoint.full_route}' is public without explicit authorization intent",
+            message=(
+                f"Endpoint '{endpoint.full_route}' is public without "
+                "explicit authorization intent"
+            ),
             recommendation=(
                 "Add explicit authorization: use AllowAny (DRF), "
                 "or document why no authentication is needed"

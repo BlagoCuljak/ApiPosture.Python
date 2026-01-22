@@ -7,7 +7,6 @@ from apiposture.core.models.enums import Severity
 from apiposture.core.models.finding import Finding
 from apiposture.rules.base import SecurityRule
 
-
 # Maximum number of roles before triggering
 MAX_ROLES = 3
 

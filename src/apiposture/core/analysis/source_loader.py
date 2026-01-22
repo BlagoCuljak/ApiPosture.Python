@@ -97,7 +97,9 @@ class ASTHelpers:
     """Helper functions for working with Python AST nodes."""
 
     @staticmethod
-    def get_decorator_names(node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef) -> list[str]:
+    def get_decorator_names(
+        node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef,
+    ) -> list[str]:
         """
         Get the names of all decorators on a function or class.
 

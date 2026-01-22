@@ -16,14 +16,19 @@ def activate(
     key: str = typer.Argument(..., help="License key to activate"),
 ) -> None:
     """Activate a license key."""
-    console.print("[yellow]License activation is not available in the open-source version.[/yellow]")
+    console.print(
+        "[yellow]License activation is not available in the open-source version.[/yellow]"
+    )
     console.print("Visit https://apiposture.io for Pro features.")
 
 
 @license_app.command()
 def deactivate() -> None:
     """Deactivate the current license."""
-    console.print("[yellow]License deactivation is not available in the open-source version.[/yellow]")
+    console.print(
+        "[yellow]License deactivation is not available "
+        "in the open-source version.[/yellow]"
+    )
 
 
 @license_app.command()

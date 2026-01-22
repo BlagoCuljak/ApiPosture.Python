@@ -1,10 +1,18 @@
 """FastAPI authorization extraction."""
 
 import ast
+from typing import TypedDict
 
 from apiposture.core.analysis.source_loader import ASTHelpers, ParsedSource
 from apiposture.core.models.authorization import AuthorizationInfo
 
+
+class _DepInfo(TypedDict):
+    """Type for dependency extraction info."""
+
+    dependencies: list[str]
+    scopes: list[str]
+    requires_auth: bool
 
 # Known auth dependency patterns
 AUTH_DEPENDENCY_PATTERNS = {
@@ -78,7 +86,7 @@ class FastAPIAuthExtractor:
             source="function",
         )
 
-    def _extract_from_annotation(self, annotation: ast.expr) -> dict[str, object] | None:
+    def _extract_from_annotation(self, annotation: ast.expr) -> _DepInfo | None:
         """Extract dependency info from a type annotation."""
         # Handle Annotated[Type, Depends(...)]
         if isinstance(annotation, ast.Subscript):
@@ -90,7 +98,7 @@ class FastAPIAuthExtractor:
                             return result
         return None
 
-    def _extract_from_default(self, default: ast.expr) -> dict[str, object] | None:
+    def _extract_from_default(self, default: ast.expr) -> _DepInfo | None:
         """Extract dependency info from a default value (Depends/Security call)."""
         if not isinstance(default, ast.Call):
             return None
@@ -99,7 +107,7 @@ class FastAPIAuthExtractor:
         if not call_name:
             return None
 
-        result: dict[str, object] = {
+        result: _DepInfo = {
             "dependencies": [],
             "scopes": [],
             "requires_auth": False,
@@ -162,7 +170,9 @@ class FastAPIAuthExtractor:
                 return True
 
         # Heuristic: contains auth-related keywords
-        auth_keywords = {"auth", "user", "token", "bearer", "jwt", "oauth", "credential", "permission"}
+        auth_keywords = {
+            "auth", "user", "token", "bearer", "jwt", "oauth", "credential", "permission"
+        }
         return any(kw in name_lower for kw in auth_keywords)
 
     def extract_dependencies_list(self, node: ast.List) -> list[str]:

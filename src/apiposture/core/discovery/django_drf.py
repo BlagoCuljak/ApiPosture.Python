@@ -11,7 +11,6 @@ from apiposture.core.models.authorization import AuthorizationInfo
 from apiposture.core.models.endpoint import Endpoint
 from apiposture.core.models.enums import EndpointType, Framework, HttpMethod
 
-
 # DRF view base classes
 DRF_VIEW_BASES = {
     "APIView",

@@ -10,7 +10,6 @@ from apiposture.core.discovery.base import EndpointDiscoverer
 from apiposture.core.discovery.django_drf import DjangoRESTFrameworkDiscoverer
 from apiposture.core.discovery.fastapi import FastAPIEndpointDiscoverer
 from apiposture.core.discovery.flask import FlaskEndpointDiscoverer
-from apiposture.core.models.endpoint import Endpoint
 from apiposture.core.models.scan_result import ScanResult
 from apiposture.rules.engine import RuleEngine
 

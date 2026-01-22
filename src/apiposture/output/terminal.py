@@ -9,7 +9,6 @@ from apiposture.core.models.enums import SecurityClassification, Severity
 from apiposture.core.models.scan_result import ScanResult
 from apiposture.output.base import FormatterOptions, OutputFormatter
 
-
 # Severity colors and icons
 SEVERITY_STYLES = {
     Severity.CRITICAL: ("bold red", "!!"),
