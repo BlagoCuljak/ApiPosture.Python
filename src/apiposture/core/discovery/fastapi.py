@@ -54,10 +54,13 @@ class FastAPIEndpointDiscoverer(EndpointDiscoverer):
         # Track router variables and their prefixes/dependencies
         routers = self._find_routers(source)
 
+        # Resolve type aliases like CurrentUser = Annotated[User, Depends(...)]
+        type_aliases = self.auth_extractor.resolve_type_aliases(source)
+
         # Find all decorated functions
         for node in ast.walk(source.tree):
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                yield from self._process_function(node, source, file_path, routers)
+                yield from self._process_function(node, source, file_path, routers, type_aliases)
 
     def _find_routers(self, source: ParsedSource) -> dict[str, dict[str, object]]:
         """
@@ -110,11 +113,12 @@ class FastAPIEndpointDiscoverer(EndpointDiscoverer):
         source: ParsedSource,
         file_path: Path,
         routers: dict[str, dict[str, object]],
+        type_aliases: dict | None = None,
     ) -> Iterator[Endpoint]:
         """Process a function definition for route decorators."""
         for decorator in node.decorator_list:
             endpoint = self._extract_endpoint_from_decorator(
-                node, decorator, source, file_path, routers
+                node, decorator, source, file_path, routers, type_aliases
             )
             if endpoint:
                 yield endpoint
@@ -126,6 +130,7 @@ class FastAPIEndpointDiscoverer(EndpointDiscoverer):
         source: ParsedSource,
         file_path: Path,
         routers: dict[str, dict[str, object]],
+        type_aliases: dict | None = None,
     ) -> Endpoint | None:
         """Extract endpoint info from a route decorator."""
         if not isinstance(decorator, ast.Call):
@@ -194,16 +199,29 @@ class FastAPIEndpointDiscoverer(EndpointDiscoverer):
         if tags_arg:
             tags.extend(ASTHelpers.get_list_of_strings(tags_arg))
 
-        # Extract authorization info from function
-        func_auth = self.auth_extractor.extract_from_function(node, source)
+        # Extract route-level dependencies= (e.g. @router.get("/", dependencies=[Depends(...)]))
+        decorator_auth: AuthorizationInfo | None = None
+        deps_arg = ASTHelpers.find_keyword_arg(decorator, "dependencies")
+        if deps_arg and isinstance(deps_arg, ast.List):
+            dep_names = self.auth_extractor.extract_dependencies_list(deps_arg)
+            if dep_names:
+                decorator_auth = AuthorizationInfo(
+                    requires_auth=True,
+                    auth_dependencies=dep_names,
+                    source="decorator",
+                )
 
-        # Merge router and function auth
-        if router_auth and func_auth.requires_auth:
-            authorization = router_auth.merge(func_auth)
-        elif router_auth:
-            authorization = router_auth
-        else:
-            authorization = func_auth
+        # Extract authorization info from function
+        func_auth = self.auth_extractor.extract_from_function(
+            node, source, type_aliases=type_aliases
+        )
+
+        # Merge auth: router → decorator → function
+        authorization = func_auth
+        if decorator_auth:
+            authorization = decorator_auth.merge(authorization)
+        if router_auth:
+            authorization = router_auth.merge(authorization)
 
         return Endpoint(
             route=route,

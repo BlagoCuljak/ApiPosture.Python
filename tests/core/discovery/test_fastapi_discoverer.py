@@ -182,3 +182,83 @@ async def admin(token: str = Security(oauth2_scheme, scopes=["admin:read"])):
         assert len(endpoints) == 1
         assert endpoints[0].authorization.requires_auth
         assert "admin:read" in endpoints[0].authorization.scopes
+
+    def test_discover_annotated_type_alias(self, discoverer, parse_code):
+        """Test that Annotated type alias resolves auth (e.g. CurrentUser = Annotated[User, Depends(...)])."""
+        code = """
+from typing import Annotated
+from fastapi import FastAPI, Depends
+
+app = FastAPI()
+
+def get_current_user():
+    pass
+
+CurrentUser = Annotated[dict, Depends(get_current_user)]
+
+@app.get("/me")
+async def get_me(user: CurrentUser):
+    return user
+"""
+        source = parse_code(code)
+        endpoints = list(discoverer.discover(source, Path("test.py")))
+
+        assert len(endpoints) == 1
+        assert endpoints[0].authorization.requires_auth
+        assert "get_current_user" in endpoints[0].authorization.auth_dependencies
+
+    def test_discover_imported_alias_heuristic(self, discoverer, parse_code):
+        """Test that imported auth alias names are detected via heuristic."""
+        code = """
+from fastapi import FastAPI
+from app.deps import CurrentUser
+
+app = FastAPI()
+
+@app.get("/me")
+async def get_me(user: CurrentUser):
+    return user
+"""
+        source = parse_code(code)
+        endpoints = list(discoverer.discover(source, Path("test.py")))
+
+        assert len(endpoints) == 1
+        assert endpoints[0].authorization.requires_auth
+
+    def test_discover_route_level_dependencies(self, discoverer, parse_code):
+        """Test that dependencies= in route decorator is detected."""
+        code = """
+from fastapi import APIRouter, Depends
+
+router = APIRouter()
+
+def get_current_active_superuser():
+    pass
+
+@router.get("/users", dependencies=[Depends(get_current_active_superuser)])
+async def read_users():
+    return []
+"""
+        source = parse_code(code)
+        endpoints = list(discoverer.discover(source, Path("test.py")))
+
+        assert len(endpoints) == 1
+        assert endpoints[0].authorization.requires_auth
+        assert "get_current_active_superuser" in endpoints[0].authorization.auth_dependencies
+
+    def test_non_auth_annotation_not_flagged(self, discoverer, parse_code):
+        """Test that non-auth type annotations don't trigger false positives."""
+        code = """
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/items")
+async def get_items(limit: int, name: str):
+    return []
+"""
+        source = parse_code(code)
+        endpoints = list(discoverer.discover(source, Path("test.py")))
+
+        assert len(endpoints) == 1
+        assert not endpoints[0].authorization.requires_auth

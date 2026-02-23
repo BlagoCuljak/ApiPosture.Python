@@ -17,6 +17,20 @@ FLASK_ROUTE_DECORATORS = {"route", "get", "post", "put", "delete", "patch"}
 # Flask import indicators
 FLASK_IMPORTS = {"flask", "Flask", "Blueprint"}
 
+# HTTP methods supported by MethodView
+_METHODVIEW_HTTP_METHODS: dict[str, HttpMethod] = {
+    "get": HttpMethod.GET,
+    "post": HttpMethod.POST,
+    "put": HttpMethod.PUT,
+    "delete": HttpMethod.DELETE,
+    "patch": HttpMethod.PATCH,
+    "head": HttpMethod.HEAD,
+    "options": HttpMethod.OPTIONS,
+}
+
+# Known MethodView base classes
+_METHODVIEW_BASES = {"MethodView", "View"}
+
 
 class FlaskEndpointDiscoverer(EndpointDiscoverer):
     """Discovers endpoints in Flask applications."""
@@ -49,6 +63,9 @@ class FlaskEndpointDiscoverer(EndpointDiscoverer):
         for node in ast.walk(source.tree):
             if isinstance(node, ast.FunctionDef):
                 yield from self._process_function(node, source, file_path, blueprints)
+
+        # Find MethodView class-based views
+        yield from self._discover_method_views(source, file_path, blueprints)
 
     def _find_blueprints(self, source: ParsedSource) -> dict[str, dict[str, str]]:
         """
@@ -187,3 +204,241 @@ class FlaskEndpointDiscoverer(EndpointDiscoverer):
             authorization=auth_info,
             router_prefix=router_prefix,
         )
+
+    # ---- MethodView support ----
+
+    def _discover_method_views(
+        self,
+        source: ParsedSource,
+        file_path: Path,
+        blueprints: dict[str, dict[str, str]],
+    ) -> Iterator[Endpoint]:
+        """Discover endpoints from MethodView classes and their route registrations."""
+        view_classes = self._find_method_view_classes(source)
+        if not view_classes:
+            return
+
+        registrations = self._find_view_registrations(source)
+
+        for reg in registrations:
+            class_name = reg["class_name"]
+            if class_name not in view_classes:
+                continue
+
+            view_info = view_classes[class_name]
+            router_prefix = ""
+            bp_var = reg.get("blueprint_var", "")
+            if bp_var and bp_var in blueprints:
+                router_prefix = blueprints[bp_var].get("url_prefix", "")
+
+            for route in reg["routes"]:
+                for method_name, method_node in view_info["methods"].items():
+                    http_method = _METHODVIEW_HTTP_METHODS.get(method_name)
+                    if not http_method:
+                        continue
+
+                    # Auth from class-level decorators_class_view attribute
+                    auth_info = view_info["auth"]
+                    # Also check method-level decorators
+                    method_auth = self.auth_extractor.extract_from_function(method_node)
+                    if method_auth.requires_auth or method_auth.allows_anonymous:
+                        auth_info = auth_info.merge(method_auth)
+
+                    yield Endpoint(
+                        route=route,
+                        methods=[http_method],
+                        file_path=file_path,
+                        line_number=method_node.lineno,
+                        framework=Framework.FLASK,
+                        endpoint_type=EndpointType.CONTROLLER_ACTION,
+                        function_name=f"{class_name}.{method_name}",
+                        authorization=auth_info,
+                        router_prefix=router_prefix,
+                    )
+
+    def _find_method_view_classes(
+        self, source: ParsedSource
+    ) -> dict[str, dict]:
+        """Find classes inheriting from MethodView and extract their HTTP method handlers."""
+        classes: dict[str, dict] = {}
+
+        for node in ast.walk(source.tree):
+            if not isinstance(node, ast.ClassDef):
+                continue
+
+            # Check if class inherits from MethodView
+            is_method_view = False
+            for base in node.bases:
+                base_name = None
+                if isinstance(base, ast.Name):
+                    base_name = base.id
+                elif isinstance(base, ast.Attribute):
+                    base_name = base.attr
+                if base_name and base_name in _METHODVIEW_BASES:
+                    is_method_view = True
+                    break
+
+            if not is_method_view:
+                continue
+
+            # Extract HTTP method handlers
+            methods: dict[str, ast.FunctionDef] = {}
+            for item in node.body:
+                if isinstance(item, ast.FunctionDef) and item.name in _METHODVIEW_HTTP_METHODS:
+                    methods[item.name] = item
+
+            if not methods:
+                continue
+
+            # Extract auth from class-level decorators
+            class_auth = AuthorizationInfo(source="class")
+            # Check class decorators
+            for decorator in node.decorator_list:
+                dec_auth = self.auth_extractor.extract_from_decorator(decorator)
+                if dec_auth.requires_auth or dec_auth.allows_anonymous:
+                    class_auth = class_auth.merge(dec_auth)
+
+            # Check `decorators_class_view = [login_required]` class attribute
+            for item in node.body:
+                if isinstance(item, ast.Assign):
+                    for target in item.targets:
+                        if (
+                            isinstance(target, ast.Name)
+                            and target.id in ("decorators", "decorators_class_view")
+                            and isinstance(item.value, ast.List)
+                        ):
+                            for elem in item.value.elts:
+                                dec_auth = self.auth_extractor.extract_from_decorator(elem)
+                                if dec_auth.requires_auth or dec_auth.allows_anonymous:
+                                    class_auth = class_auth.merge(dec_auth)
+
+            classes[node.name] = {
+                "methods": methods,
+                "auth": class_auth,
+                "node": node,
+            }
+
+        return classes
+
+    def _find_view_registrations(
+        self, source: ParsedSource
+    ) -> list[dict]:
+        """
+        Find route registrations for class-based views.
+
+        Handles:
+        - register_view(bp, routes=["/login"], view_func=Class.as_view("name"))
+        - app.add_url_rule("/path", view_func=Class.as_view("name"))
+        - bp.add_url_rule("/path", view_func=Class.as_view("name"))
+        """
+        registrations: list[dict] = []
+
+        for node in ast.walk(source.tree):
+            if not isinstance(node, ast.Call):
+                continue
+
+            call_name = ASTHelpers.get_call_name(node)
+            if not call_name:
+                continue
+
+            if call_name == "register_view" or call_name.endswith(".register_view"):
+                reg = self._parse_register_view(node)
+                if reg:
+                    registrations.append(reg)
+            elif call_name.endswith("add_url_rule"):
+                reg = self._parse_add_url_rule(node, call_name)
+                if reg:
+                    registrations.append(reg)
+
+        return registrations
+
+    def _extract_class_from_as_view(self, node: ast.expr) -> str | None:
+        """Extract class name from Class.as_view("name") call."""
+        if not isinstance(node, ast.Call):
+            return None
+        if isinstance(node.func, ast.Attribute) and node.func.attr == "as_view":
+            if isinstance(node.func.value, ast.Name):
+                return node.func.value.id
+        return None
+
+    def _parse_register_view(self, call: ast.Call) -> dict | None:
+        """Parse register_view(bp, routes=[...], view_func=Class.as_view(...))."""
+        # Extract routes
+        routes_arg = ASTHelpers.find_keyword_arg(call, "routes")
+        if not routes_arg:
+            # Try positional: register_view(bp, routes=[...])
+            for arg in call.args:
+                if isinstance(arg, ast.List):
+                    routes_arg = arg
+                    break
+
+        routes: list[str] = []
+        if routes_arg:
+            routes = ASTHelpers.get_list_of_strings(routes_arg)
+
+        if not routes:
+            return None
+
+        # Extract class name from view_func=Class.as_view(...)
+        class_name = None
+        view_func_arg = ASTHelpers.find_keyword_arg(call, "view_func")
+        if view_func_arg:
+            class_name = self._extract_class_from_as_view(view_func_arg)
+
+        # Also check positional args for Class.as_view(...)
+        if not class_name:
+            for arg in call.args:
+                class_name = self._extract_class_from_as_view(arg)
+                if class_name:
+                    break
+
+        if not class_name:
+            return None
+
+        # Extract blueprint variable (first arg if it's a Name)
+        bp_var = ""
+        if call.args and isinstance(call.args[0], ast.Name):
+            bp_var = call.args[0].id
+
+        return {
+            "routes": routes,
+            "class_name": class_name,
+            "blueprint_var": bp_var,
+        }
+
+    def _parse_add_url_rule(self, call: ast.Call, call_name: str) -> dict | None:
+        """Parse app.add_url_rule("/path", view_func=Class.as_view(...))."""
+        # Extract route (first positional arg)
+        route = None
+        if call.args:
+            route = ASTHelpers.get_string_value(call.args[0])
+
+        # Also check 'rule' keyword
+        if not route:
+            rule_arg = ASTHelpers.find_keyword_arg(call, "rule")
+            if rule_arg:
+                route = ASTHelpers.get_string_value(rule_arg)
+
+        if not route:
+            return None
+
+        # Extract class from view_func=Class.as_view(...)
+        class_name = None
+        view_func_arg = ASTHelpers.find_keyword_arg(call, "view_func")
+        if view_func_arg:
+            class_name = self._extract_class_from_as_view(view_func_arg)
+
+        if not class_name:
+            return None
+
+        # Extract blueprint/app variable
+        bp_var = ""
+        parts = call_name.split(".")
+        if len(parts) > 1:
+            bp_var = parts[-2]
+
+        return {
+            "routes": [route],
+            "class_name": class_name,
+            "blueprint_var": bp_var,
+        }
