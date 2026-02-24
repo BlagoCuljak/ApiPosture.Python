@@ -184,7 +184,10 @@ async def admin(token: str = Security(oauth2_scheme, scopes=["admin:read"])):
         assert "admin:read" in endpoints[0].authorization.scopes
 
     def test_discover_annotated_type_alias(self, discoverer, parse_code):
-        """Test that Annotated type alias resolves auth (e.g. CurrentUser = Annotated[User, Depends(...)])."""
+        """Test that Annotated type alias resolves auth.
+
+        e.g. CurrentUser = Annotated[User, Depends(...)]
+        """
         code = """
 from typing import Annotated
 from fastapi import FastAPI, Depends

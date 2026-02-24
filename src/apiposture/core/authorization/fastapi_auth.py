@@ -38,7 +38,10 @@ SECURITY_PATTERNS = {
 }
 
 
-_AUTH_NAME_KEYWORDS = {"user", "auth", "admin", "token", "session", "principal", "identity", "credential"}
+_AUTH_NAME_KEYWORDS = {
+    "user", "auth", "admin", "token",
+    "session", "principal", "identity", "credential",
+}
 
 
 class FastAPIAuthExtractor:
