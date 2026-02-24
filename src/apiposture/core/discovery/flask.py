@@ -3,6 +3,7 @@
 import ast
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
 from apiposture.core.analysis.source_loader import ASTHelpers, ParsedSource
 from apiposture.core.authorization.flask_auth import FlaskAuthExtractor
@@ -258,9 +259,9 @@ class FlaskEndpointDiscoverer(EndpointDiscoverer):
 
     def _find_method_view_classes(
         self, source: ParsedSource
-    ) -> dict[str, dict]:
+    ) -> dict[str, dict[str, Any]]:
         """Find classes inheriting from MethodView and extract their HTTP method handlers."""
-        classes: dict[str, dict] = {}
+        classes: dict[str, dict[str, Any]] = {}
 
         for node in ast.walk(source.tree):
             if not isinstance(node, ast.ClassDef):
@@ -322,7 +323,7 @@ class FlaskEndpointDiscoverer(EndpointDiscoverer):
 
     def _find_view_registrations(
         self, source: ParsedSource
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         """
         Find route registrations for class-based views.
 
@@ -331,7 +332,7 @@ class FlaskEndpointDiscoverer(EndpointDiscoverer):
         - app.add_url_rule("/path", view_func=Class.as_view("name"))
         - bp.add_url_rule("/path", view_func=Class.as_view("name"))
         """
-        registrations: list[dict] = []
+        registrations: list[dict[str, Any]] = []
 
         for node in ast.walk(source.tree):
             if not isinstance(node, ast.Call):
@@ -361,7 +362,7 @@ class FlaskEndpointDiscoverer(EndpointDiscoverer):
                 return node.func.value.id
         return None
 
-    def _parse_register_view(self, call: ast.Call) -> dict | None:
+    def _parse_register_view(self, call: ast.Call) -> dict[str, Any] | None:
         """Parse register_view(bp, routes=[...], view_func=Class.as_view(...))."""
         # Extract routes
         routes_arg = ASTHelpers.find_keyword_arg(call, "routes")
@@ -406,7 +407,7 @@ class FlaskEndpointDiscoverer(EndpointDiscoverer):
             "blueprint_var": bp_var,
         }
 
-    def _parse_add_url_rule(self, call: ast.Call, call_name: str) -> dict | None:
+    def _parse_add_url_rule(self, call: ast.Call, call_name: str) -> dict[str, Any] | None:
         """Parse app.add_url_rule("/path", view_func=Class.as_view(...))."""
         # Extract route (first positional arg)
         route = None

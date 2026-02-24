@@ -3,6 +3,7 @@
 import ast
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
 from apiposture.core.analysis.source_loader import ASTHelpers, ParsedSource
 from apiposture.core.authorization.fastapi_auth import FastAPIAuthExtractor
@@ -113,7 +114,7 @@ class FastAPIEndpointDiscoverer(EndpointDiscoverer):
         source: ParsedSource,
         file_path: Path,
         routers: dict[str, dict[str, object]],
-        type_aliases: dict | None = None,
+        type_aliases: dict[str, Any] | None = None,
     ) -> Iterator[Endpoint]:
         """Process a function definition for route decorators."""
         for decorator in node.decorator_list:
@@ -130,7 +131,7 @@ class FastAPIEndpointDiscoverer(EndpointDiscoverer):
         source: ParsedSource,
         file_path: Path,
         routers: dict[str, dict[str, object]],
-        type_aliases: dict | None = None,
+        type_aliases: dict[str, Any] | None = None,
     ) -> Endpoint | None:
         """Extract endpoint info from a route decorator."""
         if not isinstance(decorator, ast.Call):
