@@ -191,3 +191,53 @@ class UserViewSet(ModelViewSet):
         assert len(endpoints) == 2
         functions = {e.function_name for e in endpoints}
         assert functions == {"activate", "recent"}
+
+    def test_permission_classes_tuple_syntax(self, discoverer, parse_code):
+        """Test that tuple-syntax permission_classes = (IsAuthenticated,) is recognized."""
+        code = """
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+
+class UserView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        return Response([])
+"""
+        source = parse_code(code)
+        endpoints = list(discoverer.discover(source, Path("test.py")))
+
+        assert len(endpoints) == 1
+        assert endpoints[0].authorization.requires_auth
+        assert "IsAuthenticated" in endpoints[0].authorization.permissions
+
+    def test_custom_viewset_base_with_action_and_tuple_permissions(self, discoverer, parse_code):
+        """Test ViewSet with custom base class, @action, and tuple permission_classes."""
+        code = """
+from rest_framework import mixins, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+class WorkOperationsViewSet(ValidatedGenericViewSet,
+                            mixins.RetrieveModelMixin,
+                            viewsets.GenericViewSet):
+    permission_classes = (IsAuthenticated,)
+
+    @action(detail=True, methods=['patch'], url_path='start')
+    def start(self, request, pk=None):
+        return Response({})
+
+    @action(detail=True, methods=['patch'], url_path='complete')
+    def complete(self, request, pk=None):
+        return Response({})
+"""
+        source = parse_code(code)
+        endpoints = list(discoverer.discover(source, Path("test.py")))
+
+        assert len(endpoints) == 2
+        for ep in endpoints:
+            assert ep.authorization.requires_auth, (
+                f"Expected requires_auth on {ep.function_name}, got {ep.authorization}"
+            )
+            assert "IsAuthenticated" in ep.authorization.permissions

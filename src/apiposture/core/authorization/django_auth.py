@@ -109,8 +109,8 @@ class DjangoAuthExtractor:
         requires_auth = False
         allows_anonymous = False
 
-        # Handle list of permission classes
-        if isinstance(node, ast.List):
+        # Handle list or tuple of permission classes
+        if isinstance(node, (ast.List, ast.Tuple)):
             for elem in node.elts:
                 perm_name = self._get_permission_name(elem)
                 if perm_name:
