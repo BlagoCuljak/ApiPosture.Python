@@ -40,6 +40,12 @@ class AP001PublicWithoutIntent(SecurityRule):
         if endpoint.classification != SecurityClassification.PUBLIC:
             return
 
+        # "/public/" as a URL path segment is a developer convention signalling
+        # intentional public access (e.g. /api/public/files). Don't flag these.
+        route = endpoint.full_route.lower()
+        if "/public/" in route or route.startswith("/public"):
+            return
+
         auth = endpoint.authorization
 
         # If explicitly marked as anonymous/public, this is intentional
