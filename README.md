@@ -1,6 +1,21 @@
 # ApiPosture
 
+[![Build and Test](https://github.com/BlagoCuljak/ApiPosture.Python/actions/workflows/build.yml/badge.svg)](https://github.com/BlagoCuljak/ApiPosture.Python/actions/workflows/build.yml)
+[![PyPI Version](https://img.shields.io/pypi/v/apiposture?logo=pypi&label=PyPI)](https://pypi.org/project/apiposture)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/apiposture?logo=pypi&label=Downloads)](https://pypi.org/project/apiposture)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/badge/Python-3.9%20|%203.10%20|%203.11%20|%203.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support-FFDD00?logo=buy-me-a-coffee&logoColor=black)](https://checkout.revolut.com/pay/525834c6-21cd-4d72-bb99-2dc27d3a0a6d)
+
 A CLI security inspection tool for Python API frameworks. Performs static source-code analysis to identify authorization misconfigurations and security risks.
+
+### Terminal Output
+
+![Terminal Output](assets/images/Python1_result.webp)
+
+### Findings Report
+
+![Findings Report](assets/images/Python2_result.webp)
 
 ## Features
 
