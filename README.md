@@ -1,6 +1,6 @@
 # ApiPosture
 
-[![Build and Test](https://github.com/BlagoCuljak/ApiPosture.Python/actions/workflows/build.yml/badge.svg)](https://github.com/BlagoCuljak/ApiPosture.Python/actions/workflows/build.yml)
+[![Build and Test](https://github.com/BlagoCuljak/ApiPosture.Python/actions/workflows/ci.yml/badge.svg)](https://github.com/BlagoCuljak/ApiPosture.Python/actions/workflows/ci.yml)
 [![PyPI Version](https://img.shields.io/pypi/v/apiposture?logo=pypi&label=PyPI)](https://pypi.org/project/apiposture)
 [![PyPI Downloads](https://img.shields.io/pypi/dm/apiposture?logo=pypi&label=Downloads)](https://pypi.org/project/apiposture)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
