@@ -142,7 +142,8 @@ class TerminalFormatter(OutputFormatter):
 
         for finding in result.active_findings:
             style = SEVERITY_RICH_STYLES[finding.severity]
-            sev_text = SEVERITY_LABELS[finding.severity] if self.options.no_icons else SEVERITY_ICONS[finding.severity]
+            icons = SEVERITY_LABELS if self.options.no_icons else SEVERITY_ICONS
+            sev_text = icons[finding.severity]
 
             table.add_row(
                 Text(sev_text, style=style),
