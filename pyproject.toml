@@ -1,10 +1,10 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
 name = "apiposture"
-version = "1.0.14"
+dynamic = ["version"]
 description = "A CLI security inspection tool for Python API frameworks"
 readme = "README.md"
 license = "MIT"
@@ -57,6 +57,12 @@ Documentation = "https://github.com/apiposture/apiposture-python#readme"
 Repository = "https://github.com/apiposture/apiposture-python"
 Issues = "https://github.com/apiposture/apiposture-python/issues"
 
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/apiposture/_version.py"
+
 [tool.hatch.build.targets.sdist]
 include = [
     "/src",
@@ -72,6 +78,7 @@ pythonpath = ["src"]
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+exclude = ["src/apiposture/_version.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
