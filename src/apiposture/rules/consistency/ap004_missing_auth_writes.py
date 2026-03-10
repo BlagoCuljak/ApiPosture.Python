@@ -5,7 +5,7 @@ from collections.abc import Iterator
 from apiposture.core.models.endpoint import Endpoint
 from apiposture.core.models.enums import SecurityClassification, Severity
 from apiposture.core.models.finding import Finding
-from apiposture.rules.base import SecurityRule
+from apiposture.rules.base import SecurityRule, is_known_public_endpoint
 
 
 class AP004MissingAuthWrites(SecurityRule):
@@ -47,6 +47,11 @@ class AP004MissingAuthWrites(SecurityRule):
 
         # Skip if explicitly allowing anonymous (covered by AP002)
         if endpoint.authorization.allows_anonymous:
+            return
+
+        # Authentication entry points (login, register, token, OAuth flows, etc.)
+        # must accept unauthenticated POST requests — they are the auth mechanism.
+        if is_known_public_endpoint(endpoint):
             return
 
         yield self.create_finding(

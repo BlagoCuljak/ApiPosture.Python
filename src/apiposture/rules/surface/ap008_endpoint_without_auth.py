@@ -5,7 +5,7 @@ from collections.abc import Iterator
 from apiposture.core.models.endpoint import Endpoint
 from apiposture.core.models.enums import Framework, SecurityClassification, Severity
 from apiposture.core.models.finding import Finding
-from apiposture.rules.base import SecurityRule
+from apiposture.rules.base import SecurityRule, is_known_public_endpoint
 
 
 class AP008EndpointWithoutAuth(SecurityRule):
@@ -43,6 +43,11 @@ class AP008EndpointWithoutAuth(SecurityRule):
 
         # Skip if explicitly allowing anonymous
         if endpoint.authorization.allows_anonymous:
+            return
+
+        # Well-known intentionally public endpoints (auth entry points and
+        # infrastructure probes) are exempt — they have no auth by design.
+        if is_known_public_endpoint(endpoint):
             return
 
         auth = endpoint.authorization

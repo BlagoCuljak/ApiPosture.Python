@@ -5,7 +5,7 @@ from collections.abc import Iterator
 from apiposture.core.models.endpoint import Endpoint
 from apiposture.core.models.enums import SecurityClassification, Severity
 from apiposture.core.models.finding import Finding
-from apiposture.rules.base import SecurityRule
+from apiposture.rules.base import SecurityRule, is_known_public_endpoint
 
 
 class AP001PublicWithoutIntent(SecurityRule):
@@ -44,6 +44,12 @@ class AP001PublicWithoutIntent(SecurityRule):
         # intentional public access (e.g. /api/public/files). Don't flag these.
         route = endpoint.full_route.lower()
         if "/public/" in route or route.startswith("/public"):
+            return
+
+        # Well-known intentionally public endpoints (auth entry points and
+        # infrastructure probes) are exempt — flagging them produces noise
+        # without actionable security value.
+        if is_known_public_endpoint(endpoint):
             return
 
         auth = endpoint.authorization

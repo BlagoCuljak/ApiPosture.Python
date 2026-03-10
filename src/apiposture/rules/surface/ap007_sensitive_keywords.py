@@ -28,7 +28,8 @@ SENSITIVE_KEYWORDS = {
     "dump",
     "logs",
     "metrics",
-    "health",  # healthcheck endpoints should usually be protected
+    # NOTE: "health" intentionally omitted — health-check endpoints are public
+    # by cloud-native convention (K8s liveness/readiness probes, load balancers).
     "status",
     "diagnose",
     "diagnostic",
