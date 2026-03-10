@@ -9,13 +9,38 @@ from apiposture.core.models.enums import SecurityClassification, Severity
 from apiposture.core.models.scan_result import ScanResult
 from apiposture.output.base import FormatterOptions, OutputFormatter
 
-# Severity colors and icons
+# Severity icons (emoji) and text fallbacks for icon-disabled mode
+SEVERITY_ICONS = {
+    Severity.CRITICAL: "\u274c",       # Red X
+    Severity.HIGH: "\u26a0\ufe0f",    # Warning sign
+    Severity.MEDIUM: "\u26a1",         # Lightning bolt
+    Severity.LOW: "\u2139\ufe0f",     # Info
+    Severity.INFO: "\u2139\ufe0f",    # Info
+}
+
+SEVERITY_LABELS = {
+    Severity.CRITICAL: "[CRIT]",
+    Severity.HIGH: "[HIGH]",
+    Severity.MEDIUM: "[MED]",
+    Severity.LOW: "[LOW]",
+    Severity.INFO: "[INFO]",
+}
+
+SEVERITY_RICH_STYLES = {
+    Severity.CRITICAL: "bold red",
+    Severity.HIGH: "red",
+    Severity.MEDIUM: "yellow",
+    Severity.LOW: "blue",
+    Severity.INFO: "dim",
+}
+
+# Severity colors and icons (kept for classification table)
 SEVERITY_STYLES = {
-    Severity.CRITICAL: ("bold red", "!!"),
-    Severity.HIGH: ("red", "!"),
-    Severity.MEDIUM: ("yellow", "*"),
-    Severity.LOW: ("blue", "-"),
-    Severity.INFO: ("dim", "i"),
+    Severity.CRITICAL: ("bold red", SEVERITY_ICONS[Severity.CRITICAL]),
+    Severity.HIGH: ("red", SEVERITY_ICONS[Severity.HIGH]),
+    Severity.MEDIUM: ("yellow", SEVERITY_ICONS[Severity.MEDIUM]),
+    Severity.LOW: ("blue", SEVERITY_ICONS[Severity.LOW]),
+    Severity.INFO: ("dim", SEVERITY_ICONS[Severity.INFO]),
 }
 
 # Classification colors
@@ -116,9 +141,9 @@ class TerminalFormatter(OutputFormatter):
         table.add_column("Location", width=30)
 
         for finding in result.active_findings:
-            style, icon = SEVERITY_STYLES[finding.severity]
-
-            sev_text = icon if not self.options.no_icons else finding.severity.value[:1].upper()
+            style = SEVERITY_RICH_STYLES[finding.severity]
+            icons = SEVERITY_LABELS if self.options.no_icons else SEVERITY_ICONS
+            sev_text = icons[finding.severity]
 
             table.add_row(
                 Text(sev_text, style=style),
