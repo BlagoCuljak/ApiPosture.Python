@@ -24,6 +24,7 @@ class OutputFormat(str, Enum):
     TERMINAL = "terminal"
     JSON = "json"
     MARKDOWN = "markdown"
+    HTML = "html"
 
 
 class SortBy(str, Enum):
@@ -131,6 +132,7 @@ def scan(
     from apiposture.output.json_output import JsonFormatter
     from apiposture.output.markdown import MarkdownFormatter
     from apiposture.output.terminal import TerminalFormatter
+    from apiposture.output.html import HtmlFormatter
 
     # Load configuration
     config_data = None
@@ -212,6 +214,8 @@ def scan(
         formatter = JsonFormatter(options)
     elif output == OutputFormat.MARKDOWN:
         formatter = MarkdownFormatter(options)
+    elif output == OutputFormat.HTML:
+        formatter = HtmlFormatter(options)
     else:
         formatter = TerminalFormatter(options)
 
@@ -224,7 +228,6 @@ def scan(
         console.print(f"Output written to {output_file}")
     else:
         if output == OutputFormat.TERMINAL:
-            # TerminalFormatter uses rich directly
             formatter.print(result, console)
         else:
             console.print(output_str)

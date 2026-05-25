@@ -116,7 +116,7 @@ suppressions:
 apiposture scan [PATH] [OPTIONS]
 
 Options:
-  -o, --output         Output format: terminal, json, markdown
+  -o, --output         Output format: terminal, json, markdown, html
   -f, --output-file    Write output to file
   -c, --config         Configuration file path
   --severity           Minimum severity: info, low, medium, high, critical
