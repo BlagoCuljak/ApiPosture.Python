@@ -129,10 +129,10 @@ def scan(
     from apiposture.core.analysis.project_analyzer import ProjectAnalyzer
     from apiposture.core.configuration.loader import ConfigLoader
     from apiposture.output.base import FormatterOptions, OutputFormatter
+    from apiposture.output.html import HtmlFormatter
     from apiposture.output.json_output import JsonFormatter
     from apiposture.output.markdown import MarkdownFormatter
     from apiposture.output.terminal import TerminalFormatter
-    from apiposture.output.html import HtmlFormatter
 
     # Load configuration
     config_data = None
